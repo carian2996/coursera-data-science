@@ -1,3 +1,7 @@
+# Ian Castillo Rosales
+# R Programming Course
+# 08062014
+
 x <- c(4, "a", T)
 class(x)
 
