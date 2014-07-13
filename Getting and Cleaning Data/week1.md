@@ -3,13 +3,13 @@
 ## Week 1
 The goal of the course. El objetivo del curso es aprender a reconocer los recursos que nos permiten poder obtener datos de tipo fila, para después "limpiarlos" y tener una tabla para su posterior análisis.
 	
-	* Raw and processed data. 
-		+ Los datos son valores de variables cuanti o cuali, pertenecientes a un conjuntos de items.
-	* Raw vs processed data
-		+ Datos duros, no procesados, no hábiles para un análisis.
-		+ Datos procesados, listos para el análisis, ya están procesados, recordar todos los pasos que se
-		hicieron para procesar los datos.
-	* Datos ordenados. El objetivo de la limpieza de datos. 
+* Raw and processed data. 
+	+ Los datos son valores de variables cuanti o cuali, pertenecientes a un conjuntos de items.
+* Raw vs processed data
+	+ Datos duros, no procesados, no hábiles para un análisis.
+	+ Datos procesados, listos para el análisis, ya están procesados, recordar todos los pasos que se
+	hicieron para procesar los datos.
+* Datos ordenados. El objetivo de la limpieza de datos. 
 
 Tienes que saber cuatro cosas:
 	* Los datos duros.
