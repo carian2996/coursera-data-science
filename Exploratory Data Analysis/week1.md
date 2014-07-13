@@ -24,3 +24,29 @@ Beautiful Evidence (book)
 		+ La gráfica debe ser una historia completa, creíble.
 	* Principio 6. El contenido es el rey.
 		+ Sin un contenido bueno, a nadie le importa tu análisis.
+
+## ¿Para que usamos las gráficas en el análisis de datos?
+	- Para entender las propiedades de los datos
+	- Para encontrar patrones
+	- Para sugerir estrategias de modelaje
+	- Para hacer un analisis de debug
+	- Para comunicar resultados
+
+## Las características de las gráficas exploratorias
+	- Se realizan de una manera rápida
+	- Un gran número de ellas se hacen
+	- El objetivo es el entendimiento personal 
+
+## Resumen de datos simple
+	- Una dimensión
+		+ summary() function
+		+ Boxplots
+		+ Histogram
+		+ Density plots
+		+ Barplot
+	- Dos dimensiones
+		+ Multiple/overlayed 1-D plots
+		+ Scatterplots
+		+ Smooth scatterplots
+		+ Multiple/overlayed 2-D plots
+		+ Spinning
