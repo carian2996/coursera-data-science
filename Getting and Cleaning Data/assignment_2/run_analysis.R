@@ -4,7 +4,7 @@
 setwd("~/Desktop/repos/datasciencecoursera/Getting and Cleaning Data/assignment_2")
 
 # Download and unzip the data in the workspace
-if(file.exists("data.zip")){
+if(!file.exists("getdata-projectfiles-UCI HAR Dataset.zip")){
       url_file <- "http://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
       download.file(url_file, "data.zip")
 }
@@ -32,8 +32,6 @@ mean_index <- grep("mean\\(\\)|std\\(\\)", features[, 2])
 data_joined <- data_joined[, mean_index]
 
 names(data_joined) <- gsub("\\(\\)", "", features[mean_index, 2]) # remove "()"
-names(data_joined) <- gsub("mean", "Mean", names(data_joined)) # capitalize M
-names(data_joined) <- gsub("std", "Std", names(data_joined)) # capitalize S
 names(data_joined) <- gsub("-", "", names(data_joined)) # remove "-" in column names 
 
 # ========== Name the activities in the data set ==========
@@ -45,4 +43,6 @@ names(label_joined) <- "activity"
 # ========== Labels the data set with descriptive variable names ==========
 names(label_joined) <- "subject"
 cleanedData <- cbind(subject_joined, label_joined, data_joined)
+
+# ========== Write the text file ==========
 write.table(cleanedData, "merged_data.txt")
