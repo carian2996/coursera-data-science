@@ -11,7 +11,7 @@ if(!file.exists("communities.csv")){
 
 data <- read.csv("communities.csv")
 agricultureLogical <- data$ACR ==3 & data$AGS == 6
-which(agricultureLogical) # Devuelve el índice en el que TRUE aparece
+which(agricultureLogical)[1:3] # Devuelve el índice en el que TRUE aparece
 
 # Pregunta 2
 install.packages("jpeg")

@@ -1,5 +1,6 @@
 # Ian Castillo Rosales
-# 14102014
+# 14102014 - 21102014
+# Data Science Specialization - Getting and Cleaning Data 
 
 # Set the working directory in the place where you're going to work
 dir_work <- "~/Desktop/repos/datasciencecoursera/Getting and Cleaning Data/assignment_2"
@@ -36,44 +37,27 @@ subject_joined <- rbind(subject_train, subject_test) # Join the train and test s
 # Load the features from the file and make it readable
 features <- read.table("./UCI HAR Dataset/features.txt")
 features[, 2] <- gsub("\\(\\)", "", features[, 2]) # remove "()" in column names 
-features[, 2] <- gsub("-", " ", features[, 2]) # remove "-" in column names 
-
+features[, 2] <- gsub("-", "_", features[, 2]) # remove "-" in column names 
 # Extract only features releated with mean or standard deviation
-mean_index <- grep("mean | std", features[, 2])
-
+mean_index <- grep("mean|std", features[, 2])
 # Keep only the features releated with mean or standard deviation
 data_joined <- data_joined[, mean_index]
 
-# ========== 3 Name the activities and subjects in the data set ==========
+# ========== 4 Name the activities and subjects in the data set ==========
 activity <- read.table("./UCI HAR Dataset/activity_labels.txt")
 label_joined <- tolower(activity[label_joined[, 1], 2])
-
 # Merge the sets into an only tidy data set
 tidy_data <- cbind(subject_joined, label_joined, data_joined)
-# Name the variables with descriptive names
+
+# ========== 3 Name the variables with descriptive names ==========
 names(tidy_data) <- c("subject", "activity", as.character(features[mean_index, 2]))
 tidy_data <- arrange(tidy_data, subject, activity)
-
-# ========== 4 Write the text file ==========
-write.table(tidy_data, "tidy_data.txt")
+names(tidy_data)
 
 # ========== 5 Create a new set of data with the average of the variables ==========
 new_data <- tidy_data
-n_subject <- unique(new_data$subject)
-activities <- unique(new_data$activity)
+average_tidy_data <- new_data %>%
+      group_by(subject, activity) %>%
+      summarise_each(funs(mean))
 
-average_data <- matrix(NA, nrow = length(n_subject)*length(activities), ncol = ncol(tidy_data))
-average_data <- as.data.frame(average_data)
-
-names(average_data) <- names(tidy_data)
-average_data$subject <- sort(rep(n_subject, length(activities)))
-average_data$activity <- activities
-
-for(i in n_subject){
-      for(j in seq(activities)){
-            average_data[j + j*(i-1), -(1:2)] <- apply(filter(new_data, subject == i & activity == activities[j])[, -(1:2)], 2, mean)
-      }
-}
-
-new_
-group_by()
+write.table(average_tidy_data, "average_tidy_data.txt", row.names = FALSE)
