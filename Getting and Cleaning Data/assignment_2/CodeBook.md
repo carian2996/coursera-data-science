@@ -36,5 +36,4 @@ tidy_data: Contain the tidy set data
 This tidy data set contains the average of each measurement related with mean measurement and standard deviation measurement.
 The average was calculate group by subject and activity.
 
-### Variables of avegare_tidy_data.txt
-The
+ICR
