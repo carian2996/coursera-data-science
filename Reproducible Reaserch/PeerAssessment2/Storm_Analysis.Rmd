@@ -1,0 +1,131 @@
+---
+title: "Storm Data Analysis"
+author: "Ian Castillo Rosales"
+date: "25 de octubre de 2014"
+---
+
+```{r, results='hide', echo=FALSE}
+library(dplyr, quietly = T)
+```
+
+
+## Abstract
+
+
+## Some information about the data
+
+*Storm Data* is an official publication of the **National Oceanic and Atmospheric Administration** (NOAA). The National Weather service receives their information from a variety of sources, which include but are not limited to:  
+
+- County  
+- State and federal emergency management officials  
+- Local law enforcement officials  
+- Skywarn spotters  
+- NWS damage surveys  
+- Newspaper clipping services  
+- The insurance industry and the general public  
+      
+The *Storm Data* present the next documents:
+
+* The occurrence of storms and other significant weather phenomena having sufficient intensity to cause loss of life, injuries, significant property damage, and/or disruption to commerce;  
+* Rare, unusual, weather phenomena that generate media attention, such as snow flurries in South Florida or the San Diego coastal area;  
+* Other significant meteorological events, such as record maximum or minimum 
+temperatures or precipitation that occur in connection with another event. 
+
+**The events in the database start in the year 1950 and end in November 2011. In the earlier years of the database there are generally fewer events recorded, most likely due to a lack of good records. More recent years should be considered more complete.**
+
+*More information about the data can be consult [here](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf) of [here](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf)*
+
+## Data Processing
+First, we set our working directory and if we don't already downloaded the data, the code below will do it.
+```{r, echo=TRUE}
+setwd("~/Desktop/repos/datasciencecoursera/Reproducible Reaserch/PeerAssessment2")
+if(!file.exists("data.bz2")){
+      url <- "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+      download.file(url, "data.bz2")
+}
+```
+
+Read the data into workspace  and change the uppercase letters to lowercase letters.
+```{r, echo=TRUE, cache=TRUE}
+data <- read.csv(bzfile("data.bz2"))
+names(data) <- tolower(names(data))
+data$evtype <- tolower(data$evtype)
+
+# official_events <- tolower(c("Astronomical Low Tide", "Avalanche", "Blizzard",
+#                      "Coastal Flood", "Cold/Wind Chill", "Debris Flow", 
+#                      "Dense Fog", "Dense Smoke", "Drought", "Dust Devil", 
+#                      "Dust Storm", "Excessive Heat", "Extreme Cold/Wind Chill", 
+#                      "Flash Flood", "Flood", "Frost/Freeze", "Funnel Cloud", 
+#                      "Freezing Fog", "Hail", "Heat", "Heavy Rain", "Heavy Snow", 
+#                      "High Surf", "High Wind", "Hurricane (Typhoon)", "Ice Storm", 
+#                      "Lake-Effect Snow", "Lakeshore Flood", "Lightning", 
+#                      "Marine Hail", "Marine High Wind", "Marine Strong Wind", 
+#                      "Marine Thunderstorm Wind", "Rip Curren", "Seiche", "Sleet", 
+#                      "Storm Surge/Tide", "Strong Wind", "Thunderstorm Wind", 
+#                      "Tornado", "Tropical Depression", "Tropical Storm", "Tsunami", 
+#                      "Volcanic Ash", "Waterspout", "Wildfire", "Winter Storm", 
+#                      "Winter Weather"))
+```
+
+This is how it looks our data. The data contains 37 variables, but we only work with these 6.
+```{r}
+head(data %>% select(state, evtype, fatalities, injuries, propdmg, cropdmg))
+```
+
+The entire data structure is show below
+```{r, echo=TRUE}
+str(data)
+```
+
+## Which types of events are most harmful with respect to population health?
+The firs we are going to do is filter the date with the records that possess more than one fatalitie or injure record.  
+```{r, echo=TRUE}
+harmful_data <- data %>%
+      select(bgn_date, state, evtype, fatalities, injuries) %>%
+      filter(!(fatalities == 0 & injuries == 0))
+```
+
+```{r, echo=TRUE}
+pattern <- substr(official_events, 1, 4)
+for(i in seq_along(official_events)){
+      harmful_data$evtype[grep(pattern[i], harmful_data$evtype)] <- official_events[i]
+}
+```
+
+Now, we're interest in the data collected for the United States, filter the data with the states of the country, group by type of event. Sum the total of fatalities/injures and register the maximum of fatalities/injuries of that event.
+```{r, echo=TRUE}
+by_evtype_harmful <- harmful_data %>%
+      filter(!is.na(match(harmful_data$state, state.abb)) &
+             !is.na(match(harmful_data$evtype, official_events))) %>%
+      group_by(evtype) %>%
+      summarise(sum(fatalities), max(fatalities), sum(injuries), max(injuries))
+
+names(by_evtype_harmful) <- c("evtype", "total_fatal", "max_fatal", "total_injur", "max_injur")
+
+```
+
+```{r, echo=TRUE}
+by_evtype_harmful <- by_evtype_harmful %>%
+      mutate(num_ocur = table(harmful_data$evtype[!is.na(match(harmful_data$state, state.abb)) &
+                                                        !is.na(match(harmful_data$evtype, official_events))]))
+```
+
+```{r, echo=TRUE}
+harmful_event <- c()
+
+(harmful_event[1] <- by_evtype_harmful$evtype[which.max(by_evtype_harmful$total_fatal)])
+(harmful_event[2] <- by_evtype_harmful$evtype[which.max(by_evtype_harmful$total_injur)])
+
+(harmful_event[3] <- by_evtype_harmful$evtype[which.max(by_evtype_harmful$max_fatal)])
+(harmful_event[4] <- by_evtype_harmful$evtype[which.max(by_evtype_harmful$max_injur)])
+```
+
+```{r, echo=TRUE}
+most_harmful_events <- unique(harmful_event)
+```
+
+```{r, echo=TRUE}
+
+```
+
+## Results
