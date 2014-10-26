@@ -1,18 +1,35 @@
 ---
-title: "Storm Data Analysis"
+title: "A Storm Data Analysis: Harmful and Economic Consequences"
 author: "Ian Castillo Rosales"
-date: "25 de octubre de 2014"
+date: "26 de octubre de 2014"
 ---
 
 ```{r, results='hide', echo=FALSE}
 library(dplyr, quietly = T)
+official_events <- tolower(c("Astronomical Low Tide", "Avalanche", "Blizzard",
+                     "Coastal Flood", "Cold/Wind Chill", "Debris Flow", 
+                     "Dense Fog", "Dense Smoke", "Drought", "Dust Devil", 
+                     "Dust Storm", "Excessive Heat", "Extreme Cold/Wind Chill", 
+                     "Flash Flood", "Flood", "Frost/Freeze", "Funnel Cloud", 
+                     "Freezing Fog", "Hail", "Heat", "Heavy Rain", "Heavy Snow", 
+                     "High Surf", "High Wind", "Hurricane (Typhoon)", "Ice Storm", 
+                     "Lake-Effect Snow", "Lakeshore Flood", "Lightning", 
+                     "Marine Hail", "Marine High Wind", "Marine Strong Wind", 
+                     "Marine Thunderstorm Wind", "Rip Curren", "Seiche", "Sleet", 
+                     "Storm Surge/Tide", "Strong Wind", "Thunderstorm Wind", 
+                     "Tornado", "Tropical Depression", "Tropical Storm", "Tsunami", 
+                     "Volcanic Ash", "Waterspout", "Wildfire", "Winter Storm", 
+                     "Winter Weather"))
 ```
 
-
 ## Abstract
+In this brief analysis we analize the consequences of weather events, specifically, consequences for population health (fatalities and injuries) and economic consequences (cost of property/cost of crop). The analysis is based in the data collected by the National Oceanic and Atmospheric Administration (NOAA).  
 
+For the consequences to the population health we considered the two types of consequences, fatalities and injuries. The analysis shows two types of indicators. The total of fatalities/injuries of each weather event and the maximum of fatalities/injuries of one of each event. The second analysis consider the same factors for the economic consequences.  
 
-## Some information about the data
+We support our study with some graphics and tables.  
+
+## Some information about the data  
 
 *Storm Data* is an official publication of the **National Oceanic and Atmospheric Administration** (NOAA). The National Weather service receives their information from a variety of sources, which include but are not limited to:  
 
@@ -36,7 +53,7 @@ temperatures or precipitation that occur in connection with another event.
 *More information about the data can be consult [here](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf) of [here](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf)*
 
 ## Data Processing
-First, we set our working directory and if we don't already downloaded the data, the code below will do it.
+First, we set our working directory and if we don't already downloaded the data, the code below will do it.  
 ```{r, echo=TRUE}
 setwd("~/Desktop/repos/datasciencecoursera/Reproducible Reaserch/PeerAssessment2")
 if(!file.exists("data.bz2")){
@@ -45,39 +62,25 @@ if(!file.exists("data.bz2")){
 }
 ```
 
-Read the data into workspace  and change the uppercase letters to lowercase letters.
+Read the data into workspace  and change the uppercase letters to lowercase letters.  
 ```{r, echo=TRUE, cache=TRUE}
 data <- read.csv(bzfile("data.bz2"))
 names(data) <- tolower(names(data))
 data$evtype <- tolower(data$evtype)
-
-# official_events <- tolower(c("Astronomical Low Tide", "Avalanche", "Blizzard",
-#                      "Coastal Flood", "Cold/Wind Chill", "Debris Flow", 
-#                      "Dense Fog", "Dense Smoke", "Drought", "Dust Devil", 
-#                      "Dust Storm", "Excessive Heat", "Extreme Cold/Wind Chill", 
-#                      "Flash Flood", "Flood", "Frost/Freeze", "Funnel Cloud", 
-#                      "Freezing Fog", "Hail", "Heat", "Heavy Rain", "Heavy Snow", 
-#                      "High Surf", "High Wind", "Hurricane (Typhoon)", "Ice Storm", 
-#                      "Lake-Effect Snow", "Lakeshore Flood", "Lightning", 
-#                      "Marine Hail", "Marine High Wind", "Marine Strong Wind", 
-#                      "Marine Thunderstorm Wind", "Rip Curren", "Seiche", "Sleet", 
-#                      "Storm Surge/Tide", "Strong Wind", "Thunderstorm Wind", 
-#                      "Tornado", "Tropical Depression", "Tropical Storm", "Tsunami", 
-#                      "Volcanic Ash", "Waterspout", "Wildfire", "Winter Storm", 
-#                      "Winter Weather"))
 ```
 
-This is how it looks our data. The data contains 37 variables, but we only work with these 6.
-```{r}
+This is how it looks our data. The data contains 37 variables, but we only work with these 6.  
+```{r, echo=TRUE}
 head(data %>% select(state, evtype, fatalities, injuries, propdmg, cropdmg))
 ```
 
-The entire data structure is show below
+The entire data structure is show below  
 ```{r, echo=TRUE}
 str(data)
 ```
 
-## Which types of events are most harmful with respect to population health?
+## Which types of events are most harmful with respect to population health?  
+
 The firs we are going to do is filter the date with the records that possess more than one fatalitie or injure record.  
 ```{r, echo=TRUE}
 harmful_data <- data %>%
@@ -85,6 +88,7 @@ harmful_data <- data %>%
       filter(!(fatalities == 0 & injuries == 0))
 ```
 
+**We need classify the types of events in the data with the events permitted in Storm Data**. So we extract some patter of the names for official events and agroup the data events.  
 ```{r, echo=TRUE}
 pattern <- substr(official_events, 1, 4)
 for(i in seq_along(official_events)){
@@ -92,7 +96,7 @@ for(i in seq_along(official_events)){
 }
 ```
 
-Now, we're interest in the data collected for the United States, filter the data with the states of the country, group by type of event. Sum the total of fatalities/injures and register the maximum of fatalities/injuries of that event.
+We're interest only in the data collected for the United States, filter the data with the states of the country, group by type of event. Sum the total of fatalities/injures and register the maximum of fatalities/injuries of that event.  
 ```{r, echo=TRUE}
 by_evtype_harmful <- harmful_data %>%
       filter(!is.na(match(harmful_data$state, state.abb)) &
@@ -101,31 +105,143 @@ by_evtype_harmful <- harmful_data %>%
       summarise(sum(fatalities), max(fatalities), sum(injuries), max(injuries))
 
 names(by_evtype_harmful) <- c("evtype", "total_fatal", "max_fatal", "total_injur", "max_injur")
-
 ```
 
-```{r, echo=TRUE}
-by_evtype_harmful <- by_evtype_harmful %>%
-      mutate(num_ocur = table(harmful_data$evtype[!is.na(match(harmful_data$state, state.abb)) &
-                                                        !is.na(match(harmful_data$evtype, official_events))]))
-```
-
+We considerated the event with the maximun total of fatalities and injuries. The events are:  
 ```{r, echo=TRUE}
 harmful_event <- c()
 
 (harmful_event[1] <- by_evtype_harmful$evtype[which.max(by_evtype_harmful$total_fatal)])
 (harmful_event[2] <- by_evtype_harmful$evtype[which.max(by_evtype_harmful$total_injur)])
-
+```
+We considerated the event with the maximun of fatalities and injuries in one single event. The events are:  
+```{r, echo=TRUE}
 (harmful_event[3] <- by_evtype_harmful$evtype[which.max(by_evtype_harmful$max_fatal)])
 (harmful_event[4] <- by_evtype_harmful$evtype[which.max(by_evtype_harmful$max_injur)])
 ```
 
+The figure below shows the relation between the fatal and injur events and the most harmful events respect to the total of fatalities or injures  
 ```{r, echo=TRUE}
-most_harmful_events <- unique(harmful_event)
+labels <- by_evtype_harmful$evtype[by_evtype_harmful$total_fatal > 3000]
+
+plot(by_evtype_harmful$total_fatal, by_evtype_harmful$total_injur, 
+     xlim = c(1, max(by_evtype_harmful$total_fatal) + 200), 
+     ylim = c(1, max(by_evtype_harmful$total_injur) + 2000), 
+     main = "Most harmful event for population health",
+     xlab = "Total of fatalities", ylab = "Total of injuries")
+points(by_evtype_harmful$total_fatal[by_evtype_harmful$total_fatal > 3000], by_evtype_harmful$total_injur[by_evtype_harmful$total_fatal > 3000], col = "red", pch = 20, lwd = 2)
+
+text(by_evtype_harmful$total_fatal[by_evtype_harmful$total_fatal > 3000], by_evtype_harmful$total_injur[by_evtype_harmful$total_fatal > 3000], labels = labels, pos = 2, cex = 0.8)
 ```
 
+The figure below shows the relation between the fatal and injur events and the most harmful events respect to the maximun of fatalities or injures  
 ```{r, echo=TRUE}
+labels2 <- by_evtype_harmful$evtype[by_evtype_harmful$max_injur > 1000]
+labels3 <- by_evtype_harmful$evtype[by_evtype_harmful$max_fatal > 500]
+
+plot(by_evtype_harmful$max_fatal, by_evtype_harmful$max_injur, 
+     xlim = c(1, max(by_evtype_harmful$max_fatal) + 100), 
+     ylim = c(1, max(by_evtype_harmful$max_injur) + 200), 
+     main = "Most harmful event for population health",
+     xlab = "Maximun of fatalities", ylab = "Maximun of injuries")
+
+points(by_evtype_harmful$max_fatal[by_evtype_harmful$max_injur > 1000], by_evtype_harmful$max_injur[by_evtype_harmful$max_injur > 1000], col = "red", pch = 20, lwd = 2)
+points(by_evtype_harmful$max_fatal[by_evtype_harmful$max_fatal > 500], by_evtype_harmful$max_injur[by_evtype_harmful$max_fatal > 500], col = "red", pch = 20, lwd = 2)
+
+text(by_evtype_harmful$max_fatal[by_evtype_harmful$max_injur > 1000], by_evtype_harmful$max_injur[by_evtype_harmful$max_injur > 1000], labels = labels2, pos = 4, cex = 0.8)
+text(by_evtype_harmful$max_fatal[by_evtype_harmful$max_fatal > 500], by_evtype_harmful$max_injur[by_evtype_harmful$max_fatal > 500], labels = labels3, pos = 1, cex = 0.8)
+```
+
+
+## Which types of events have the greatest economic consequences?
+Consider only the next variables, and take the records with the condition that record should have at least one report of property or crop damage.  
+```{r, echo=TRUE}
+economic_data <- data %>%
+      select(bgn_date, state, evtype, propdmg, propdmgexp, cropdmg, cropdmgexp) %>%
+      filter(!(propdmg == 0 & cropdmg == 0))
+```
+
+We consider the events with the official events in the data of NOAA  
+```{r, echo=TRUE}
+for(i in seq_along(official_events)){
+      economic_data$evtype[grep(pattern[i], economic_data$evtype)] <- official_events[i]
+}
+```
+
+Consider again, two factors, maximum number of total damage or maximum damage  
+```{r, echo=TRUE}
+by_evtype_economic <- economic_data %>%
+      filter(!is.na(match(economic_data$state, state.abb)) &
+             !is.na(match(economic_data$evtype, official_events))) %>%
+      group_by(evtype) %>%
+      summarise(sum(propdmg), max(propdmg), sum(cropdmg), max(cropdmg))
+
+names(by_evtype_economic) <- c("evtype", "total_prop", "max_prop", "total_crop", "max_crop")
+```
+
+We considerated the event with the maximun total of fatalities and injuries. The events are:  
+```{r, echo=TRUE}
+economic_event <- c()
+
+(economic_event[1] <- by_evtype_economic$evtype[which.max(by_evtype_economic$total_prop)])
+(economic_event[2] <- by_evtype_economic$evtype[which.max(by_evtype_economic$max_prop)])
+```
+We considerated the event with the maximun of fatalities and injuries in one single event. The events are:  
+```{r, echo=TRUE}
+(economic_event[3] <- by_evtype_economic$evtype[which.max(by_evtype_economic$total_crop)])
+(economic_event[4] <- by_evtype_economic$evtype[which.max(by_evtype_economic$max_crop)])
+```
+
+The next plot shows the events with more económic consequences:  
+```{r, echo=TRUE}
+barplot(by_evtype_economic$total_prop, col = "red", 
+        ylim = c(0, max(by_evtype_economic$total_prop) + 500000))
+barplot(by_evtype_economic$total_crop, col = "blue", add = T, axes = F, 
+        main ="Most economic damage events", xlab = "Events", ylab = "Damage in US Dollars")
+
+legend("topleft", c("Propery Damage", "Crop Damage"), pch = c(15, 15), col = c("red", "blue"), cex = 0.8)
+
+text(x = which.max(by_evtype_economic$total_prop), y = (max(by_evtype_economic$total_prop) + 300000), 
+     label = by_evtype_economic$evtype[which.max(by_evtype_economic$total_prop)], cex = 0.7, pos = 4)
+
+text(x = which.max(by_evtype_economic$total_crop), y = (max(by_evtype_economic$total_crop) + 300000), 
+     label = by_evtype_economic$evtype[which.max(by_evtype_economic$total_crop)], cex = 0.7, pos = 4)
+
+text(x = which.max(by_evtype_economic$max_prop), y = (max(by_evtype_economic$max_prop) + 300000), 
+     label = by_evtype_economic$evtype[which.max(by_evtype_economic$max_prop)], cex = 0.7, pos = 4)
+
+text(x = which.max(by_evtype_economic$max_crop), y = (max(by_evtype_economic$max_crop) + 500000), 
+     label = by_evtype_economic$evtype[which.max(by_evtype_economic$max_crop)], cex = 0.7, pos = 4)
 
 ```
 
 ## Results
+```{r, echo=FALSE, results='hide'}
+max_total_fatal <- max(by_evtype_harmful$total_fatal)
+max_total_injur <- max(by_evtype_harmful$total_injur)
+max_fatal <- max(by_evtype_harmful$max_fatal)
+max_injur <- max(by_evtype_harmful$max_injur)
+```
+
+The previous analysis clearly shows two types of weather events that can be very dangerous for the population health:
+      * `r harmful_event[1]`: With `r max_total_fatal` fatalities recorded 
+      * `r harmful_event[2]`: With `r max_total_injur` injures recorded
+
+In addition, we must consider another type of event:
+      * `r harmful_event[3]`: With a record of `r max_fatal` fatalities in only one weather event
+      * `r harmful_event[4]`: With a record of `r max_injur` fatalities in only one weather event
+      
+```{r, echo=FALSE, results='hide'}
+max_total_prop <- max(by_evtype_economic$total_prop)
+max_total_crop <- max(by_evtype_economic$total_crop)
+max_prop <- max(by_evtype_economic$max_prop)
+max_crop <- max(by_evtype_economic$max_crop)
+```
+
+In case of economic damages, we consider the next events that can be expensives:  
+      * `r economic_event[1]`: With a `r max_total_prop` total property damage recorded   
+      * `r economic_event[3]`: With a record of `r max_prop` property damage in only one weather event  
+
+In addition, we must consider another type of event:  
+      * `r economic_event[2]`: With `r max_total_crop` total crop damage recorded   
+      * `r economic_event[4]`: With a record of `r max_crop` crop damage in only one weather event  
