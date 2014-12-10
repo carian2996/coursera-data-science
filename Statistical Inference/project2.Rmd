@@ -1,0 +1,70 @@
+---
+title: 'Toothgrowth: An analysis of the Effect of Vitamin C in Guinea Pigs'
+author: "Ian Castillo Rosales"
+date: "November, 21"
+output: html_document
+---
+
+## About the data
+The response is the length of odontoblasts (teeth) in each of 10 guinea pigs at each of three dose levels of Vitamin C (0.5, 1, and 2 mg) with each of two delivery methods (orange juice or ascorbic acid).
+
+**The data set can be founf in the datasets package.**
+
+```{r settings, echo=FALSE}
+setwd("~/Desktop/repos/datasciencecoursera/Statistical Inference")
+library(datasets)
+library(reshape2)
+library(ggplot2)
+data(ToothGrowth)
+```
+
+We can see more tangible the structure of the data, also a summary of the three variables.
+```{r summary, echo=TRUE}
+head(ToothGrowth)
+summary(ToothGrowth)
+```
+Where,   
+
+      * len = Tooth length
+      * supp = Spplement type (VC or OJ)
+      * dose = Dose in milligrams
+
+## Exploratory Analysis
+
+```{r graphs, echo=FALSE}
+ggplot(ToothGrowth, aes(x=factor(dose), y=len, fill=factor(dose)))+geom_boxplot()+facet_grid(.~supp)+ggtitle("Analyzing ToothGrowth data")
+```
+
+We can assume that exist some **relation between the lenght of the tooth and the dose** of the sustance, either OJ or VC. It seems that in lower doses the OJ has an better effect in the growth tooth, but in bigger doses, the effect seems to be the same.
+
+## Data processing
+We arrange the data to put the observation (pigs) versus the variables (type of supplement and dosis)
+```{r process, echo=TRUE}
+vc_data <- ToothGrowth[ToothGrowth$supp == "VC",]
+vc.doses <- as.data.frame(with(vc_data,split(len,dose)))
+names(vc.doses) <- c("vc_0.5","vc_1","vc_2")
+
+oj_data <- ToothGrowth[ToothGrowth$supp == "OJ",]
+oj.doses <- as.data.frame(with(oj_data,split(len,dose)))
+names(oj.doses) <- c("oj_0.5","oj_1","oj_2")
+
+data <- cbind(vc.doses,oj.doses)
+```
+
+Then we execute a t-test for reject or accept our hypotesis. The results are:
+```{r ttest}
+inters <- matrix(NA, 3, 2)
+for(i in seq_along(names(vc.doses))){
+      inters[i, ] <- t.test(data[, names(oj.doses)[i]] - data[, names(vc.doses)[i]], paired = F, var.equal = F)$conf
+}
+row.names(inters) <- c("0.5 dose", "1.0 dose", "2 dose")
+colnames(inters) <- c("low.interval", "upper.interval")
+```
+
+## Conclutions
+As was showed in the exploratory analysis, the intervales indicate that
+```{r interval, echo = FALSE}
+inters
+```
+
+The assumption that the orange juice is a factor to the growth tooth in the guinea pigs cannot be rejected only in the last test, with a dosis of 2 milligrams.
