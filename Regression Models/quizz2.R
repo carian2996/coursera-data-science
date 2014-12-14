@@ -17,15 +17,22 @@ exp <- fit$coefficients[1] + mean(wt) * fit$coefficients[2]
 exp - 2 * 0.5591
 
 # Question 4
+# The estimated expected change in mpg per 1,000 lb increase in weight.
 ?mtcars
 
-# Question 5
+# Question 5 Error
 summary(fit)
 fit[[1]][1] + 3 * fit[[1]][2]
 
 # Question 6
 summary(fit)
 2 * (fit$coefficients[2] - 2 * 0.5591)
+
+# Question 7
+# Multiplied by 100
+
+# Question 8
+# hat(b0) c*hat(b1)
 
 # Question 9
 attributes(fit)
@@ -35,3 +42,5 @@ fit.c.res <- fit.c$residuals ^ 2
 sum(fit.c.res)
 sum(w.c) /sum(fit.c.res)
 
+# Question 10
+# If the intercept is included, the sum of the residuals will be 0
