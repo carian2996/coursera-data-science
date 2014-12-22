@@ -1,0 +1,134 @@
+---
+title: "Motor Trends"
+author: "Ian Castillo Rosales"
+date: "December 21, 2014"
+output: html_document
+---
+```{r, echo=FALSE}
+library(ggplot2)
+```
+
+## Summary
+In this number of Motor Trend, we'll analyse the *relationship* between a set of variables from the mtcars data set and miles per gallon (MPG) to answer some interesting questions, some of them were sent us from our readers. We choose only two:  
+      
+- What transmission is better for MPG? Manual of Automatic?  
+**Manual transmission delivers 7.245 MPG more than Automatic transmission**
+- What is the MPG difference between automatic and manual transmissions?  
+**We use a multivariate regression model that incorporated number of cylinders, displacement, horsepower, and weight to find manual transmissions to be 0.1412 MPG better than automatic transmissions with a goodness of fit reaching 86%.**
+
+The next analysis support our conclutions.
+
+### Load and process data
+The data used in this analysis was obtained from the data set **mtcars**. The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models).  
+
+We can explore some of the structure of the data:
+```{r, echo=TRUE}
+data(mtcars)
+head(mtcars)
+```
+
+The variables are intepreted in the next way:  
+
+      mpg = Miles/(US) gallon
+      cyl = Number of cylinders
+      disp = Displacement (cu.in.)
+      hp = Gross horsepower
+      drat = Rear axle ratio
+      wt = Weight (lb/1000)
+      qsec = 1/4 mile time
+      vs = V/S
+      am = Transmission (0 = automatic, 1 = manual)
+      gear = Number of forward gears
+      carb = Number of carburetors
+
+### Exploratory Analysis
+A first approach to answer the question "What transmission is better for MPG? Manual of Automatic?" is look into the mean of the MPG (Miles Per Gallon) over all the observations and compare the mean with the mean of the automatic transmission (AT) and the mean of the manual transmission (MT).  
+
+An easy view is show in the figure 1 on the Appendix
+```{r, echo=TRUE}
+mpg_auto <- mtcars$mpg[mtcars$am == 0]
+mpg_manu <- mtcars$mpg[mtcars$am == 1]
+
+summary(mtcars$mpg)
+mean(mpg_auto)
+mean(mpg_manu)
+```
+
+To identify the best variables for analyze the difference between the transmission types through a multivariable regression model we can see the relation in the variables from the data with the MPG variable. We choose the variables with higher correlation for our model.
+```{r, echo=TRUE}
+mpg_allcor <- abs(cor(mtcars)[1, -1])
+vars <- names(mtcars)[-1]
+
+vars[quantile(mpg_allcor, 0.75) < mpg_allcor]
+```
+
+We can see more clearly the relation in the figure 2
+
+### Fit the models
+#### Model 1
+We can first, fit a lineal model wihout any variable.  
+```{r, echo=TRUE}
+model1 <- lm(mpg ~ factor(am), data = mtcars)
+summary(model1)
+```
+From the model 1 summary we can conclude that 
+
+- (Intercept) 17.147 is the mean MPG for Automatic Transmission .
+- factor(am)1 7.245 tells us that 24.392 (17.147+7.245) is the mean MPG for Manual Transmission.
+
+**Manual transmission delivers 7.245 MPG more than Automatic transmission**
+
+#### Model 2
+The next model analyze the situation with all the variables.
+```{r, echo=TRUE}
+model2 <- lm(mpg ~ ., data = mtcars)
+summary(model2)
+```
+From the model 2 summary, we can conclude that 
+am 2.5202 is the increase in MPG as a result of switching to Manual. The result still remane the same.
+
+**Manual transmission delivers 2.5202 MPG more than Automatic transmission.**
+
+#### Model 3
+The las model analyze the model with the variables that we choose. 
+```{r, echo=TRUE}
+model3 <- lm(mpg ~ am + wt + disp + factor(cyl), data = mtcars)
+summary(model3)
+```
+From the model summary, we can conclude that 
+am 0.14121 is the increase in MPG as a result of switching to Manual, keeping other factors unchanged.
+
+**Manual transmission delivers 0.14121 MPG more than Automatic transmission.**
+
+To choose the best model we can realize an ANOVA analysis. 
+```{r, echo=TRUE}
+anova(model1, model2, model3)
+```
+**The best model with the lowest p-value is the Model 2 with and 5% of uncertainty** with a R square (goodness of fit) of
+```{r, echo=TRUE}
+summary(model2)$r.square
+```
+
+## Appendix
+*Figure 1*
+```{r, echo=FALSE}
+ggplot(mtcars, aes(x=factor(am), y=mpg, fill=factor(am))) + geom_boxplot() + labs(
+      x="Transmission", 
+      y="Miles per Gallon",
+      title="What transmission is better for MPG?") + scale_fill_manual(
+            values=c("orange", "skyblue"),
+            labels=c("Auto", "Manual"), 
+            name="Transmission")
+```
+
+*Figure 2*
+```{r, echo=FALSE}
+pairs(mtcars[, c(T, quantile(mpg_allcor, 0.75) < mpg_allcor)])
+```
+
+*Figure 3: Residuals from the model 2*
+```{r, echo=FALSE}
+par(mfrow = c(2, 2))
+plot(model2)
+```
+
