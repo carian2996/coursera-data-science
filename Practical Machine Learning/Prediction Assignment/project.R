@@ -33,7 +33,7 @@ test <- read.csv("test.csv", na.strings=c("NA","#DIV/0!",""), header = T)
 test <- test[, -c(1, 2, grep("time", names(test)))]
 test <- test[, keep]
 
-colnames(train) == colnames(test)
+colnames(train[, -55]) == colnames(test)
 test[, which(!sapply(train, class) == sapply(test, class))] <- sapply(test[, which(!sapply(train, class) == sapply(test, class))], as.numeric)
 test[, 55] <- as.factor(test[, 55])
 
@@ -53,8 +53,10 @@ rfModel2 <- randomForest(classe ~ ., preProcess = "pca", trControl = train_contr
 rfPred2 <- predict(rfModel2, newdata = teTrain)
 confusionMatrix(rfPred2, teTrain$classe)
 
+levels(test$new_window) <- c("no", "yes")
+
 test <- test[colnames(train[, -55])]
-predictions <- predict(rfModel, newdata = test)
+predictions <- predict(rfModel, test)
 
 pml_write_files = function(x){
       n = length(x)
@@ -63,3 +65,5 @@ pml_write_files = function(x){
             write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
       }
 }
+
+pml_write_files(predictions)
