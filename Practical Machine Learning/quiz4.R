@@ -75,3 +75,5 @@ lassoModel <- train(CompressiveStrength ~ ., method = "lasso", data = training)
 plot.enet(lassoModel$finalModel, xvar = "penalty", use.color = T) #cement
 
 # ===== Question 4 =====
+url <- "http://d396qusza40orc.cloudfront.net/predmachlearn/gaData.csv"
+download.file(url = url, destfile = "nvisit.csv", method = "curl")
