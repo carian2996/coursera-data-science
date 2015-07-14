@@ -2,12 +2,15 @@
 # Getting data and overview
 # 07/06/2015
 
+# Ian Castillo Rosales
+# Getting data and overview
+# 07/06/2015
+
 # OPTIONAL: Install framework package for text mining applications within R
-# install.packages("tm")
+# install.packages(c("tm", "NPL", "caret"))
 
 # Load tm package. Loading required NLP package
-library(NLP)
-library(tm)
+library(NLP); library(tm); library(caret)
 source("~/Coursera/count_nrows.R") # Windows
 
 # Set a local working directory (depends of you)
@@ -19,8 +22,11 @@ dirCorpus <- DirSource("~/Coursera/data/en_US/") # Windows
 dirCorpus <- DirSource("~/Documents/datasciencecoursera/Capstone Project/data/en_US/")
 corpus <- Corpus(dirCorpus, readerControl = list(language = "en"))
 
-# Summary what went in
+class(corpus)
 summary(corpus)
+
+muestra <- sample(x = corpus[[1]]$content, size = 10000, replace = F)
+head(muestra)
 
 # ===== Load a sample of the corpus =====
 
@@ -47,3 +53,15 @@ sample_creation <- function(sample_size, path){
 }
 
 sample <- sample_creation(sample_size = 10, path = "~/Documents/datasciencecoursera/Capstone Project/data/en_US/en_US.news.txt")
+
+# ===== Use createDataPartition to sample text =====
+con_en <- file ("en_US.news.txt")
+sample <- createDataPartition(y = readLines(con_en), times = 1, p = 0.8)
+
+
+?createDataPartition
+
+
+
+
+
