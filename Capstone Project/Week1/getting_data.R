@@ -11,7 +11,8 @@
 
 # Load tm package. Loading required NLP package
 library(NLP); library(tm); library(caret)
-source("~/Coursera/count_nrows.R") # Windows
+options(encoding = "UTF-8")
+source("~/Coursera/week1/count_nrows.R") # Windows
 
 # Set a local working directory (depends of you)
 setwd("~/Coursera/data/en_US/") # Windows
@@ -21,7 +22,8 @@ setwd("~/Documents/datasciencecoursera/Capstone Project/data/en_US/") #Mac
 dirCorpus <- DirSource("~/Coursera/data/en_US/") # Windows
 dirCorpus <- DirSource("~/Documents/datasciencecoursera/Capstone Project/data/en_US/") # Mac
 
-corpus <- Corpus(dirCorpus, readerControl = list(language = "en"))
+corpus <- Corpus(x = dirCorpus, readerControl = list(language = "en"))
+
 summary(corpus)
 
 inspect(corpus)
