@@ -1,0 +1,183 @@
+---
+title: "Exploratory Analysis in a Corpus"
+author: "Ian Castillo Rosales"
+date: "July, 24 2015"
+output: html_document
+---
+
+## Introduction
+This is a report to summarize all the work until this date about the Final Project of the Specialization in Data Science by Johns Hopkins University through Coursera.
+
+The data for this report was obtained in (Corpora Organization)[http://www.corpora.heliohost.org/aboutcorpus.html]. The basic task for the first week was obtain the data and load into the workspace in R.
+
+The data is basically a set of documents in four different languages:
+- English
+- Finnish
+- German
+- Russian
+
+Some help abour Natural Language Processing and Text Mining can be readed from this links:
+- (NLP Tutorial in R Bloggers)[http://www.r-bloggers.com/natural-language-processing-tutorial-2/]
+- (Hands of Data Science with R. Text Mining)[http://onepager.togaware.com/TextMiningO.pdf]
+- (Basic Text Mining in R)[https://rstudio-pubs-static.s3.amazonaws.com/31867_8236987cf0a8444e962ccd2aec46d9c3.html]
+
+## Load the data into R
+The main package to load and manipulate in this work is *tm* package. To load the data we use the next code:
+```
+dirCorpus <- DirSource("~/Desktop/data_capstone/en_US/", encoding = "UTF-8")
+corpus <- Corpus(dirCorpus, readerControl = list(reader = readPlain, language = "en"))
+```
+
+For this purpose, we only load the the workspace previouly saved. 
+```{r, echo=FALSE}
+library(NLP); library(tm); library(caret); library(SnowballC);
+library(wordcloud); library(Unicode); library(ngram);
+```
+
+```{r, cache=TRUE}
+load("~/Documents/datasciencecoursera/Capstone Project/corpus_inR.RData")
+```
+
+For basic statistics of the corpus we can only use
+```{r}
+summary(corpus)
+```
+
+In this work, we'll use the document in english for blogs, so, we can see the statistics for the blog documents
+```{r}
+summary(corpus[[1]]$content)
+```
+
+## Sample the document text
+
+To obtain statistics of the document, we don't extract all the document, instead we sample with the next fuction,
+```
+sample_text <- function(no_text = 1, n_muestra = 1000, p_partition = 0.7){
+    
+    # Get the number of row in a document of the corpus
+    nrows_news <- as.numeric(summary(corpus[[no_text]]$content)[1])
+    
+    # Set the value of the sample
+    id_muestra <- sort(sample(x = 1:nrows_news, size = n_muestra, replace = F))
+    
+    muestra <- corpus[[no_text]]$content[id_muestra]
+    
+    # Create a partition of the sample
+    idPartition <- createDataPartition(y = id_muestra, p = p_partition, list = F)
+    muestraTrain<- paste(muestra[idPartition], collapse = " ")
+    muestraTest<- paste(muestra[-idPartition], collapse = " ")
+    
+    output <- list(CmuestraTrain = Corpus(VectorSource(muestraTrain)), 
+                   CmuestrTest = Corpus(VectorSource(muestraTest)))
+    
+    output
+}
+```
+
+So, we use the blog text, with a sample of 1000 and a partition of 70-30.
+```{r}
+source("~/Documents/datasciencecoursera/Capstone Project/week1/sample_text.R")
+corpus_partition <- sample_text(no_text = 1, n_muestra = 1000, p_partition = 0.7)
+```
+
+## Cleaning the text
+
+The next step is cleaning the data with the function:
+```
+cleaning_text <- function(doc, dir_badwords){
+
+    bad_words <- readLines(dir_badwords)
+    toSpace <- content_transformer(function(x, pattern) gsub(pattern, " ", x))
+    toEliminate <- content_transformer(function(x, pattern) gsub(pattern, "", x, perl = T))
+    
+    # Do the cleaning in the text
+    doc <- tm_map(doc, content_transformer(tolower))
+    doc <- tm_map(doc, removeNumbers)
+    doc <- tm_map(doc, toEliminate, "\\p{P}")
+    doc <- tm_map(doc, removePunctuation)
+    doc <- tm_map(doc, stemDocument)
+    doc <- tm_map(doc, toSpace, "/|@|-|https?://|www|com")
+    doc <- tm_map(doc, removeWords, stopwords("english"))
+    doc <- tm_map(doc, removeWords, bad_words)
+    doc <- tm_map(doc, stripWhitespace)
+    
+    doc
+}
+```
+
+So, we use:
+```{r}
+source("~/Documents/datasciencecoursera/Capstone Project/week1/cleaning_text.R")
+clean_sample <- cleaning_text(corpus_partition[[2]], "~/Documents/datasciencecoursera/Capstone Project/week1/bad_words.txt")
+```
+
+For tokenization of the text, we use the next part of the text. We obtain the tokens and bigrams for the exploratory analysis.
+```{r}
+tokens <- strsplit(clean_sample[[1]]$content, split = " ", fixed = T)[[1]]
+bitokens <- ngrams(strsplit(clean_sample[[1]]$content, split = " ", fixed = T)[[1]], 2)
+bitokens <- lapply(bitokens, paste, collapse = " ")
+bitokens <- do.call(rbind.data.frame, bitokens)
+```
+
+We obtain the frequencies of the tokens, bigrams and trigrams
+```{r}
+one_word <- data.frame(table(tokens))
+two_word <- data.frame(table(bitokens))
+
+sort_tokens <- one_word[order(one_word$Freq, decreasing = TRUE), ]
+sort_bitokens <- two_word[order(two_word$Freq, decreasing = TRUE), ]
+```
+
+## Exploratory Analysis
+We can see the most frequently words in the sample with
+```{r}
+head(sort_tokens)
+```
+We can do the same with the bigrams
+```{r}
+head(sort_bitokens)
+```
+
+With the next code, we can see the distritution of word by their first letter.
+```{r}
+group_by_letter <- data.frame(table(substr(one_word$tokens, 1, 1)))
+c <- ggplot(group_by_letter, aes(group_by_letter$Var1, group_by_letter$Freq))
+c + geom_bar(stat = "identity") + 
+    labs(title = "Frequency by first letter",
+         x = "Letter",
+         y = "Frequency")
+```
+
+This can see in a better way with a cloud word
+```{r}
+wordcloud(sort_tokens$tokens, 
+          sort_tokens$Freq, 
+          random.order = F, 
+          scale=c(3.5,.5),
+          max.words = 30, 
+          colors = brewer.pal(6, "GnBu"))
+```
+
+We can create a dictionary with the data.frame *one_word* and explore some facts about the sample.
+```{r}
+dictionary <- one_word 
+dictionary[, 3] <- cumsum(one_word$Freq)
+dictionary[, 4] <- dictionary[, 3]/sum(one_word$Freq)
+colnames(dictionary) <- c("word", "freq", "cum_freq", "quant")
+```
+
+For example, the number of words in the sample and the unique word are
+```{r}
+tail(dictionary$cum_freq, 1) # Number of words in the sample
+length(unique(dictionary$word)) # Number of unique words
+```
+
+For some basic quantiles we can see that, we need this words to cover the dictionary
+```{r}
+quantile(c(0, dictionary[, 3]))
+```
+
+## Modeling and Prediction
+
+For this part of the project, I'll use the exploratory analysis to assign probabilities to the tokens and bigrams, use a simple Markov model to assign the best option to the next word. The principal issues for the modeling is be able to optimize the model with the minimum of parameters and the speed of the algorithm.
+
