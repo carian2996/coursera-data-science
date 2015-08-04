@@ -35,24 +35,31 @@ summary(corpus[[2]]$content)
 summary(corpus[[3]]$content)
 
 # ===== Sample data =====
-source("sample_text.R")
+source("~/Coursera/week1/functions/sample_text.R")
 corpus_partition <- sample_text(corpus = corpus, 
                                 no_text = 3, 
-                                n_muestra = 5000, 
+                                n_muestra = 1000, 
                                 p_partition = 0.7)
+
 # ===== Cleaning text =====
-source("cleaning_text.R")
-clean_text <- cleaning_text(corpus_partition[[1]], 
-                            "~/Coursera/week1/bad_words.txt")
+source("~/Coursera/week1/functions/cleaning_text.R")
+clean_text <- cleaning_text(doc = corpus, 
+                            dir_badwords = "~/Coursera/week1/functions/bad_words.txt")
 
 # ===== Tokenization of text =====
-source("~/Coursera/week1/tokenization_text.R")
+source("~/Coursera/week1/functions/tokenization_text.R")
 tokens_text <- tokenization_text(document = clean_text, 
                                  get_bigrams = T, 
                                  get_trigrams = T)
 
-# ===== Exploratory analysis of the document =====
+# ====================================================================================================
+# ====================================================================================================
 
+# Ian Castillo Rosales
+# Getting data and overview
+# 01/07/2015
+
+# ===== Exploratory analysis of the document =====
 one_word <- data.frame(table(tokens_text[[1]]))
 two_word <- data.frame(table(tokens_text[[2]]))
 three_word <- data.frame(table(tokens_text[[3]]))
@@ -110,7 +117,37 @@ wordcloud(sort_trigrams$Var1,
           max.words = 25, 
           colors = brewer.pal(6, "BuPu")) 
 
-# ===== Modeling =====
+# ====================================================================================================
+# ====================================================================================================
+
+
+Conditional probabilities
+=========================
+
+P(But who am I, I need) ~ P(But who am I, I need)
+                        P(but who am i i need)
+                        = P(need | but who am i i) P(but who am i i)
+                        ...
+                        = P(need | but who am i i) * P(i | but who am i) * P (i | but who am) *
+                          P(am | but who) * P(who | but) * P(but)
+            (Markov)    = P(need | i) * P(i | i) * P(i | am) * P(am | who) * P(who | but) * P(but)
+
+Log aproximation
+================
+
+Log(P(But who am I, I need)) ~ LogP(need | i) + LogP(i | i) + LogP(i | am) 
+                                + LogP(am | who) + LogP(who | but) + LogP(but)
+
+
+
+# ====================================================================================================
+# ====================================================================================================
+
+
+# Ian Castillo Rosales
+# Prediction
+# 025/07/2015
+
 set.seed(140)
 no_test <- sample(seq(1000*(1-0.7)), size = 1)
 
@@ -119,34 +156,40 @@ test_phrase <- strsplit(x = test_phrase, split = " ", fixed = T)[[1]]
 test_phrase <- paste(test_phrase[-length(test_phrase)], collapse = " ")
 test_phrase
 
-predict_word <- function(phrase){
+predict_word <- function(phrase, bigrams, trigrams){
     
-    phrase <- test_phrase
+    phrase <- "You're the reason why I smile everyday. Can you follow me please? It would mean the"
     split_phrase <- strsplit(x = phrase, split = " ", fixed = T)[[1]]
     split_phrase <- tolower(split_phrase)
+    split_phrase <- gsub("[[:punct:]]", "", split_phrase)
+    split_phrase <- split_phrase[!split_phrase %in% stopwords("en")]
     split_phrase
     
-    sep_bigrams <- do.call(rbind.data.frame, strsplit(tokens_text[[2]], split = " "))
+    sep_bigrams <- do.call(rbind.data.frame, strsplit(bigrams, split = " "))
     colnames(sep_bigrams) <-c("word 1", "word 2")
     sep_bigrams <- sep_bigrams[order(sep_bigrams$"word 1"), ]
     
     sep_bigrams[, 1] <- as.character(sep_bigrams[, 1])
     sep_bigrams[, 2] <- as.character(sep_bigrams[, 2])
     
-    sep_trigrams <- do.call(rbind.data.frame, strsplit(tokens_text[[3]], split = " "))
-    colnames(sep_trigrams) <-c("word 1", "word 2", "word 2")
+    sep_trigrams <- do.call(rbind.data.frame, strsplit(trigrams, split = " "))
+    colnames(sep_trigrams) <-c("word 1", "word 2", "word 3")
     sep_trigrams <- sep_trigrams[order(sep_trigrams$"word 1"), ]
     
-    prev_words <- table(sep_bigrams$"word 1"[sep_bigrams$"word 2" == "bacon"])
-    total_prevwords <- length(sep_bigrams$"word 1"[sep_bigrams$"word 2" == "bacon"])
+    sep_trigrams[, 1] <- as.character(sep_trigrams[, 1])
+    sep_trigrams[, 2] <- as.character(sep_trigrams[, 2])
+    sep_trigrams[, 3] <- as.character(sep_trigrams[, 3])
+    
+    last_word <- split_phrase[length(split_phrase)]
+    
+    prev_words <- table(sep_bigrams$"word 1"[sep_bigrams$"word 2" == last_word])
+    total_prevwords <- length(sep_bigrams$"word 1"[sep_bigrams$"word 2" == last_word])
     
     names(which.max(prev_words/total_prevwords))
     
+    llast_word <- split_phrase[length(split_phrase) - 1]
+    pprev_words <- table(sep_trigrams$"word 2"[sep_trigrams$"word 3" == llast_word])
+    total_pprevwords <- length(sep_trigrams$"word 2"[sep_trigrams$"word 3" == llast_word])
+    all.equal(pprev_words)
+    names(which.max(pprev_words/total_pprevwords))
 }
-
-
-
-
-
-
-
