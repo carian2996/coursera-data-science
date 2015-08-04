@@ -35,13 +35,13 @@ summary(corpus[[2]]$content)
 summary(corpus[[3]]$content)
 
 # ===== Sample data =====
-source("~/Coursera/week1/sample_text.R")
+source("sample_text.R")
 corpus_partition <- sample_text(corpus = corpus, 
                                 no_text = 3, 
-                                n_muestra = 10000, 
+                                n_muestra = 5000, 
                                 p_partition = 0.7)
 # ===== Cleaning text =====
-source("~/Coursera/week1/cleaning_text.R")
+source("cleaning_text.R")
 clean_text <- cleaning_text(corpus_partition[[1]], 
                             "~/Coursera/week1/bad_words.txt")
 

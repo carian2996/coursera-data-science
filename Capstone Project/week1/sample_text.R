@@ -1,10 +1,5 @@
 sample_text <- function(corpus_obj, no_text = 1, n_muestra = 1000, p_partition = 0.7){
     
-    corpus_obj = corpus
-    no_text = 1
-    n_muestra = 1000
-    p_partition = 0.7
-    
     # Get the number of row in a document of the corpus
     nrows_text <- as.numeric(summary(corpus_obj[[no_text]]$content)[1])
     
