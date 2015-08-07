@@ -449,3 +449,547 @@ willies
 willy
 xrated
 xxx
+ =============================================================================
+                                cleaning_text.R
+=============================================================================
+
+cleaning_text <- function(doc, dir_badwords){
+    
+    # tokenization recive a corpus, clean the text; remove "/", "@" and "-".
+    # transform all text to lowercase, remove punctuation, stopwords and "bad 
+    # words", strip whitespaces in the text and finally, tokenize the text and 
+    # make a frequency of the words.
+    
+    # INPUT
+    # corpora = Text to analyze (should be in corpus class)
+    # dir_badwords = Directory with the bad words to remove. Should be text file.
+    
+    # OUTPUT
+    # tokens = tokens and frequency
+    
+    # Read the list of bad words
+    bad_words <- readLines(dir_badwords)
+    
+    # Create a function to convert a pattern into whitespace
+    toSpace <- content_transformer(function(x, pattern) gsub(pattern, " ", x))
+    toEliminate <- content_transformer(function(x, pattern) gsub(pattern, "", x, perl = T))
+    
+    # Do the cleaning in the text
+    doc <- tm_map(doc, toEliminate, "\\p{P}")
+    doc <- tm_map(doc, removePunctuation)
+    doc <- tm_map(doc, removeNumbers)
+    # doc <- tm_map(doc, stemDocument)
+    doc <- tm_map(doc, toSpace, "/|@|-|https?://|www|com")
+    doc <- tm_map(doc, removeWords, stopwords("english"))
+    doc <- tm_map(doc, removeWords, bad_words)
+    doc <- tm_map(doc, stripWhitespace)
+    doc <- tm_map(doc, content_transformer(tolower))
+    
+    doc
+}
+
+=============================================================================
+                                sample_text.R
+=============================================================================
+
+sample_text <- function(corpus_obj, no_text = 1, n_muestra = 1000, p_partition = 0.7){
+    
+    # Get the number of row in a document of the corpus
+    nrows_text <- as.numeric(summary(corpus_obj[[no_text]]$content)[1])
+    
+    # Set the value of the sample
+    id_muestra <- sort(sample(x = 1:nrows_text, size = n_muestra, replace = F))
+    
+    muestra <- corpus_obj[[no_text]]$content[id_muestra]
+    
+    # Create a partition of the sample
+    idPartition <- createDataPartition(y = id_muestra, p = p_partition, list = F)
+    muestraTrain <- paste(muestra[idPartition], collapse = " ")
+    muestraTest <- paste(muestra[-idPartition], collapse = " ")
+        # paste(muestra[-idPartition], collapse = " ")
+    
+    output <- list(CmuestraTrain = Corpus(VectorSource(muestraTrain)), 
+                   CmuestrTest = Corpus(VectorSource(muestraTest)))
+    
+    output
+}
+
+=============================================================================
+                              tokenization_text.R
+=============================================================================
+
+tokenization_text <- function(document, get_bigrams = F, get_trigrams = F){
+    
+    tokens <- scan_tokenizer(document[[1]]$content)
+    
+    output <- list(tokens = tokens)
+    
+    if(get_bigrams == T){
+        bigrams <- ngrams(x = strsplit(x = document[[1]]$content, 
+                                            split = " ", fixed = T)[[1]], 
+                               n = 2)
+        bigrams <- lapply(X = bigrams, 
+                               FUN = paste, collapse = " ")
+        bigrams <- unlist(lapply(X = bigrams, FUN = '[[', 1))
+        output <- list(tokens = output[[1]], bigrams = bigrams)
+    }
+    
+    if(get_trigrams == T){
+        trigrams <- ngrams(x = strsplit(x = document[[1]]$content, 
+                                            split = " ", fixed = T)[[1]], 
+                               n = 3)
+        trigrams <- lapply(X = trigrams, 
+                               FUN = paste, collapse = " ")
+        trigrams <- unlist(lapply(X = trigrams, FUN = '[[', 1))
+        
+        if(get_bigrams == T){
+            output <- list(tokens = output[[1]], 
+                           bigrams = output[[2]], 
+                           trigrams = trigrams)
+        } else{
+            output <- list(tokens = output[[1]], trigrams = trigrams)
+        }
+    }
+    
+    output
+    
+}
+
+=============================================================================
+                              task0.txt
+=============================================================================
+
+Task to accomplish
+- Obtain the data.
+- Familiarizing yourself with NLP and text mining.
+
+Questions to consider
+1. What do teh data look like?
+
+===== Organización de los datos =====
+Los datos están organizados en cuatro idiomas:
+  - Alemán
+  - Inglés
+  - Finés
+  - Ruso
+Cada uno de ellos con tres diferentes origenes de corpora (A set of documents or individual sentences that have been hand-annotated with the correct values to be learned).
+  - Blogs
+  - Noticias / Periódicos
+  - Twitter
+
+=====  Tipo de datos =====
+Los datos están organizados en diferentes corpus. Un conjunto de documentos o sentencias individuales que han sido escritos a mano con los valores correctos para ser aprendidos.
+
+===== Tamaño de los datos =====
+El tamaño de los archivo varia desde "fi_FI.twitter.txt" de 24.75 Mb hasta "en_US.blogs.txt" con 205.25 Mb.
+
+En general, para el corpus de Twitter, las sentencias no rebasan las 144 palabras (como regla de Twiiter), sin embargo, en el corpus de blogs, las palabras variar desde 1 hasta cientos.
+
+2. Where do the data come from?
+
+===== Origen de los datos ======
+Originalmente, los datos vienen de la página del Capstone Project de la especilidad Data Science de Coursera en:
+  
+  https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip
+
+===== Más información =====
+Los corpus en data fueron recolectados por HC Corpora (http://www.corpora.heliohost.org/index.html). La corpora fueron recolectados de fuentes públicas y disponibles por un web crawler.
+
+El web crawler verifíca el tipo de lenguaje, para así conseguir cuanto más texto del idioma deseado.
+
+Se pueden encontrar lineas enteras de texto en un cierto corpus. Esto por dos razones diferentes:
+
+  1. Lenguajes similares.
+  2. Lenguajes extranjeros añadidos. Al usar dos tipos de lenguaje en un cierto texto (entrada de blog, twit, párrafo, oración, etcétera).
+
+3. Can you think of any other data sources that might help you in this project?
+
+===== Datos adicionales =====
+
+  1. Corpus generados por procesadores de texto, disponibles y libres. Generados por uno mismo.
+  2. Obras completas de texo, de un lenguaje no sofisticado.
+
+4 What are the common steps in natural language processing?
+
+===== ¿Qué es el PLN? =====
+EL PLN es un campo de la ciencia computacional y la linguística concerniente a las interacciones entre computadoras y los lenguajes humanos (naturales). EL PLN se entiende como un problema completo dentro del área de Inteligencia Artificial.
+
+Los algoritmos actuales en PNL están basado en Machine Learning, especialmente en Statistical Machine Learning, el entendimiento de los algoritmos requiere un número diferentes de campos, incluyendo:
+  
+  - Lingüística.
+  - Ciencias de la Computación.
+  - Estadística (en especial Bayesiana).
+  - Álgebra Lineal.
+  - Teoría de Optimización.
+
+Los pasos básicos para el PLN, son los siguientes:
+
+  1.
+  2. 
+  3. 
+  5. 
+
+5. What are some common issues in the analysis of text data?
+
+===== Problemas en el análisis de datos de texto =====
+  
+  - Diferentes tipos de algoritmos en machine learning que han sido aplicados al PLN producen reglas tipo "si-entonces" similares a las de algoritmos antiguos (tal es es caso de los árboles de decisión). 
+  Sin embargo, modelos estadísticos producen sistemas menos rígidos, con decisiones probabilisticas basadas en pesos asignados en valores reales para cada característica de entrada. Tales algorimos tienen cierta ventaja al permitir diferentes (y posibles) respuestas en lugar de solo una. Generalmente son algos más robustos.
+
+
+6. What is the relationship between NLP and the concepts you have learned in the Specialization?
+
+===== El uso del Machine Learning en PLN =====
+El uso de marchine learning en PLN se vasa en aprender automáticamente las reglas generales de lenguaje a través de grandes cantindades de corpora como ejemplos típicos del mundo real. Un corpus, es un conjunto de documentos que han sido escritos a mano con los valores correctos listos para ser aprendidos.
+
+Una típica implementación basada en machine learning constan de dos pasos, un paso de entrenamiento y un paso de evaluación. 
+
+  Entrenamiento: Se analiza el corpus de entrenamiento y se genera un modelo de entrenamiento, que consiste en reglas automáticamente generadas. El modelo generado es típicamente el mejor modelo que puede ser encontrado y al mismo tiempo, el más simple (para evitar el sobre ajuste en los datos de entrenamiento, para poder predecir en datos nunca vistos). 
+
+  Evaluación: El modelo de aprendizaje es usado para predicción. Una parte importante del desarrollo de cualquier algoritmo de predicción es la evaluación del modelo con datos nuevos y nunca probados.
+
+IMPORTANTE: Es crítico que los datos usados para la evaluación no seas los mismos que los datos de entrenamientos, pues, de otra manera, la exactitud de la evaluación sería más alta de lo esperado.
+
+=============================================================================
+                              task1.R
+=============================================================================
+
+# Ian Castillo Rosales
+# Getting data and overview
+# 07/06/2015
+
+# rm(list=setdiff(ls(), c("corpus", "dirCorpus")))
+
+# ===== Options and libraries =====
+
+# OPTIONAL: Install framework package for text mining applications within R
+# install.packages(c("tm", "NPL", "caret", "SnowballC", "RWeka"))
+# Load tm package. Loading required NLP package
+library(NLP); library(tm); library(caret); library(wordcloud);  library(ngram);
+getOption("encoding")
+
+# ===== Set the paths and directions =====
+
+# source("~/Coursera/week1/count_nrows.R") # Windows
+
+# Set a local working directory (depends of you)
+setwd("~/Coursera/data/en_US") # Windows
+# setwd("~/Documents/datasciencecoursera/Capstone Project/Week1/") #Mac
+
+# Create a rute for your Corpus (Optional)
+dirCorpus <- DirSource("~/Coursera/data/en_US/", encoding = "UTF-8") # Windows
+# dirCorpus <- DirSource("~/Desktop/data_capstone/en_US/") # Mac
+
+# ===== Load the corpus in the workspace =====
+system.time(corpus <- Corpus(dirCorpus, 
+                             readerControl = list(reader = readPlain, 
+                                                  language = "en")))
+summary(corpus)
+
+# Explore the documents in the corpus
+summary(corpus[[1]]$content) 
+summary(corpus[[2]]$content) 
+summary(corpus[[3]]$content)
+
+# ===== Sample data =====
+source("~/Coursera/week1/functions/sample_text.R")
+system.time(corpus_partition <- sample_text(corpus = corpus, 
+                                            no_text = 2, 
+                                            n_muestra = 20000, 
+                                            p_partition = 0.7))
+
+# ===== Cleaning text =====
+source("~/Coursera/week1/functions/cleaning_text.R")
+system.time(clean_text <- cleaning_text(doc = corpus_partition$CmuestraTrain, 
+                                        dir_badwords = "~/Coursera/week1/functions/bad_words.txt"))
+
+# ===== Tokenization of text =====
+source("~/Coursera/week1/functions/tokenization_text.R")
+system.time(tokens_text <- tokenization_text(document = clean_text, 
+                                             get_bigrams = T, 
+                                             get_trigrams = F))
+
+=============================================================================
+                              task2.R
+=============================================================================
+
+# Ian Castillo Rosales
+# Getting data and overview
+# 01/07/2015
+
+# ===== Exploratory analysis of the document =====
+one_word <- data.frame(table(tokens_text$tokens))
+two_word <- data.frame(table(tokens_text$bigrams))
+# three_word <- data.frame(table(tokens_text[[3]]))
+
+sort_tokens <- one_word[order(one_word$Freq, decreasing = TRUE), ]
+sort_bigrams <- two_word[order(two_word$Freq, decreasing = TRUE), ]
+# sort_trigrams <- three_word[order(three_word$Freq, decreasing = TRUE), ]
+
+
+dictionary <- one_word  
+dictionary[, 3] <- cumsum(one_word$Freq) 
+dictionary[, 4] <- dictionary[, 3]/sum(one_word$Freq) 
+colnames(dictionary) <- c("word", "freq", "cum_freq", "quant") 
+
+tail(dictionary$cum_freq, 1) # Number of words in the sample 
+length(unique(dictionary$word)) # Number of unique words 
+
+
+quantile(c(0, dictionary[, 3])) 
+quantile(c(0, dictionary[, 3]), .90) 
+
+wordsByletter <- data.frame(letters, 0)
+for(i in seq_along(letters)){
+    wordsByletter[, 2][i] <- sum(apply(X = one_word, 
+                                       MARGIN = 2, 
+                                       FUN = substr, 1, 1)[ , 1] == letters[i])
+}
+
+c <- ggplot(wordsByletter, 
+       aes(x = factor(wordsByletter$letters, levels = wordsByletter$letters[order(wordsByletter$X0, decreasing = T)]), 
+           y = wordsByletter[, 2], 
+           fill = factor(wordsByletter$letters, levels = wordsByletter$letters[order(wordsByletter$X0, decreasing = T)])))
+
+c + geom_bar(stat = "identity") + 
+    guides(fill=FALSE) + 
+    xlab("Letters") +
+    ylab("Frequency") +
+    ggtitle("Frequency of words by letter")
+
+wordcloud(sort_tokens$Var1, 
+          sort_tokens$Freq, 
+          scale=c(3.5,.5),
+          max.words = 50,
+          colors = brewer.pal(6, "Spectral")) 
+
+wordcloud(sort_bigrams$Var1, 
+          sort_bigrams$Freq,
+          scale=c(2,.5),
+          max.words = 28, 
+          colors = brewer.pal(6, "Set2")) 
+
+wordcloud(sort_trigrams$Var1, 
+          sort_trigrams$Freq,
+          scale=c(1,.5),
+          max.words = 25, 
+          colors = brewer.pal(6, "Set3")) 
+
+=============================================================================
+                              midlestone.Rmd
+=============================================================================
+
+---
+title: "Exploratory Analysis in a Corpus"
+author: "Ian Castillo Rosales"
+date: "July, 24 2015"
+output: html_document
+---
+
+
+
+```{r}
+
+```
+
+
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+=============================================================================
+                              task3.txt
+=============================================================================
+
+
+== But who am I, I need know == 
+
+1. How can you efficiently store an n-gram model (think Markov Chains)?
+
+Conditional probabilities
+=========================
+
+P(But who am I, I need) ~ P(But who am I, I need)
+            P(but who am i i need)
+            = P(need | but who am i i) P(but who am i i)
+            ...
+            = P(need | but who am i i) * P(i | but who am i) * P (i | but who am) *
+              P(am | but who) * P(who | but) * P(but)
+      (Markov)  = P(need | i) * P(i | i) * P(i | am) * P(am | who) * P(who | but) * P(but)
+
+Log aproximation
+================
+
+Log(P(But who am I, I need)) ~ LogP(need | i) + LogP(i | i) + LogP(i | am) 
+                + LogP(am | who) + LogP(who | but) + LogP(but)
+
+2. How can you use the knowledge about word frequencies to make your model smaller and more efficient?
+
+  unigram table
+======================
+word    frequency
+======================
+am      1
+access    2
+but     3
+bear    2
+come    3
+dust    2
+I       1
+need    4
+know    2
+who     3
+
+  bigram table
+======================
+word    frequency
+======================
+I     am      1
+to    access    2
+but   what    3
+.   .     .
+.   .     .
+.   .     .
+
+  trigram table
+======================
+word    frequency
+======================
+.   .     .
+.   .     .
+.   .     .
+
+INPUT:
+But who am I, I need # Phrase 
+
+But who am I I need # Eliminate punctuation
+But who need # Eliminate stopwords
+but who need # To lower case
+
+# Split the phrase
+but 
+who 
+need
+
+# Make the bigrams in revers
+but         # unigram
+but who       # first bigram
+  who need    # second bigram
+    need [word] # third bigram
+
+P( . | but who need )   = P( but who need . ) / P( but who need )
+We have, 
+P( but who need . ) ~ exp[ LogP( . | need ) + LogP( need | who ) + LogP( who | but ) + LogP( but ) ]
+P( but who need ) ~ exp[ LogP( need | who ) + LogP( who | but ) + LogP( but ) ]
+
+Then, 
+exp [ P( . | but who need ) ] = P( but who need . ) / P( but who need )
+
+                    LogP( . | need ) + LogP( need | who ) + LogP( who | but ) + LogP( but )
+                = ---------------------------------------------------------------------------
+                      exp[ LogP( need | who ) + LogP( who | but ) + LogP( but ) ]
+
+                            LogP( . | need )
+                = -----------------------------------------------------------
+                    LogP( need | who ) + LogP( who | but ) + LogP( but )
+
+                      LogP( need | who ) + LogP( who | but ) + LogP( but )
+                + -----------------------------------------------------------
+                    LogP( need | who ) + LogP( who | but ) + LogP( but )
+
+                            LogP( . | need )
+                = ----------------------------------------------------------- + 1
+                    LogP( need | who ) + LogP( who | but ) + LogP( but )
+
+                                LogP( . | need )
+                = ----------------------------------------------------------------- + 1
+                     SUM_{1}^{n-1} LogP( w_{n - (i-1)} | w_{n - i} ) + LogP( w_0 )    
+                     
+
+
+"But who am I, I need"
+
+=============================================================================
+                              task4.R
+=============================================================================
+
+# Ian Castillo Rosales
+# Prediction
+# 025/07/2015
+
+set.seed(140)
+no_test <- sample(seq(1000*(1-0.7)), size = 1)
+
+# test_phrase <- corpus_partition$CmuestrTest[[2]]$content
+# test_phrase <- strsplit(x = test_phrase, split = " ", fixed = T)[[1]]
+# test_phrase <- paste(test_phrase[-length(test_phrase)], collapse = " ")
+# test_phrase
+
+predict_word <- function(phrase, bigrams, trigrams){
+    
+    phrase <- "But who am I, I need" # know
+    split_phrase <- strsplit(x = phrase, split = " ", fixed = T)[[1]]
+    split_phrase <- tolower(split_phrase)
+    split_phrase <- gsub("[[:punct:]]", "", split_phrase)
+    # split_phrase <- split_phrase[!split_phrase %in% stopwords("en")]
+    split_phrase
+    
+    sort_tokens$proba <- sort_tokens$Freq / sum(sort_tokens$Freq)
+    sort_bigrams$proba <- sort_bigrams$Freq / sum(sort_bigrams$Freq)
+    # sort_trigrams$proba <- sort_trigrams$Freq / sum(sort_trigrams$Freq)
+    
+    sep_bigrams <- data.frame(do.call('rbind', 
+                                      strsplit(as.character(sort_bigrams$Var1), 
+                                               " ",
+                                               fixed=TRUE)), 
+                              Freq = sort_bigrams$Freq,
+                              proba = sort_bigrams$proba)
+    colnames(sep_bigrams)[c(1, 2)] <-c("word1", "word2")
+    
+    sep_bigrams$word2[sep_bigrams$word1 == rev(split_phrase)[1]]
+    log(sep_bigrams$proba[sep_bigrams$word1 == rev(split_phrase)[1]])
+    
+    denom <- c()
+    for(i in seq_along(split_phrase[-1])){
+        denom <- c(denom, sep_bigrams$proba[sep_bigrams$word1 == rev(split_phrase)[i+1] & 
+                              sep_bigrams$word2 == rev(split_phrase)[i]])
+    }
+    denom <- c(denom, sort_tokens$proba[sort_tokens$Var1 == rev(split_phrase)[6]])
+    denom <- log(denom)
+    denom <- sum(denom)
+    
+    resultado <- log(sep_bigrams$proba[sep_bigrams$word2 == rev(split_phrase)[1]]) / denom
+    
+    n_win <- which.max(log(sep_bigrams$proba[sep_bigrams$word2 == rev(split_phrase)[1]]) / denom)
+    
+    
+    
+    sep_bigrams[sep_bigrams$word2 == rev(split_phrase)[1] &
+                sep_bigrams$word2 == "also", ]
+    
+#     
+#     sep_bigrams[, 1] <- as.character(sep_bigrams[, 1])
+#     sep_bigrams[, 2] <- as.character(sep_bigrams[, 2])
+#     
+#     sep_trigrams <- do.call(rbind.data.frame, strsplit(trigrams, split = " "))
+#     colnames(sep_trigrams) <-c("word 1", "word 2", "word 3")
+#     sep_trigrams <- sep_trigrams[order(sep_trigrams$"word 1"), ]
+#     
+#     sep_trigrams[, 1] <- as.character(sep_trigrams[, 1])
+#     sep_trigrams[, 2] <- as.character(sep_trigrams[, 2])
+#     sep_trigrams[, 3] <- as.character(sep_trigrams[, 3])
+#     
+#     last_word <- split_phrase[length(split_phrase)]
+#     
+#     prev_words <- table(sep_bigrams$"word 1"[sep_bigrams$"word 2" == last_word])
+#     total_prevwords <- length(sep_bigrams$"word 1"[sep_bigrams$"word 2" == last_word])
+#     
+#     names(which.max(prev_words/total_prevwords))
+#     
+#     llast_word <- split_phrase[length(split_phrase) - 1]
+#     pprev_words <- table(sep_trigrams$"word 2"[sep_trigrams$"word 3" == llast_word])
+#     total_pprevwords <- length(sep_trigrams$"word 2"[sep_trigrams$"word 3" == llast_word])
+#     all.equal(pprev_words)
+#     names(which.max(pprev_words/total_pprevwords))
+}
