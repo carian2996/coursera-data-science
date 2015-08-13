@@ -1,5 +1,5 @@
 tokenization_text <- function(document, get_bigrams = F, get_trigrams = F){
-    document <- clean_text
+    
     tokens <- scan_tokenizer(document[[1]]$content)
     
     output <- list(tokens = tokens)

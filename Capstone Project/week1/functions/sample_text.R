@@ -11,7 +11,7 @@ sample_text <- function(corpus_obj, no_text = 1, n_muestra = 1000, p_partition =
     # Create a partition of the sample
     idPartition <- createDataPartition(y = id_muestra, p = p_partition, list = F)
     muestraTrain <- paste(muestra[idPartition], collapse = " ")
-    muestraTest <- muestra[-idPartition]
+    muestraTest <- paste(muestra[-idPartition], collapse = " ")
         # paste(muestra[-idPartition], collapse = " ")
     
     output <- list(CmuestraTrain = Corpus(VectorSource(muestraTrain)), 

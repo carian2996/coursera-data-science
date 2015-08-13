@@ -20,8 +20,8 @@ cleaning_text <- function(doc, dir_badwords){
     toEliminate <- content_transformer(function(x, pattern) gsub(pattern, "", x, perl = T))
     
     # Do the cleaning in the text
-    doc <- tm_map(doc, removePunctuation)
     doc <- tm_map(doc, toEliminate, "\\p{P}")
+    doc <- tm_map(doc, removePunctuation)
     doc <- tm_map(doc, removeNumbers)
     # doc <- tm_map(doc, stemDocument)
     doc <- tm_map(doc, toSpace, "/|@|-|https?://|www|com")
