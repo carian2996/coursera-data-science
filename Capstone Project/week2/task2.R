@@ -5,11 +5,11 @@
 # ===== Exploratory analysis of the document =====
 one_word <- data.frame(table(tokens_text$tokens))
 two_word <- data.frame(table(tokens_text$bigrams))
-# three_word <- data.frame(table(tokens_text[[3]]))
+three_word <- data.frame(table(tokens_text[[3]]))
 
 sort_tokens <- one_word[order(one_word$Freq, decreasing = TRUE), ]
 sort_bigrams <- two_word[order(two_word$Freq, decreasing = TRUE), ]
-# sort_trigrams <- three_word[order(three_word$Freq, decreasing = TRUE), ]
+sort_trigrams <- three_word[order(three_word$Freq, decreasing = TRUE), ]
 
 
 dictionary <- one_word  
