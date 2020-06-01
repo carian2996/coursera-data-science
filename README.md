@@ -11,7 +11,7 @@ During this specialization I learned:
 - Use GitHub to manage data science projects.
 - Perform regression analysis, least squares and inference using regression models.
 
-The capstone project class allowed me to create a public data product. You can check the work for this capstone project here: https://github.com/carian2996/prediction_text
+The capstone project class allowed me to create a public data product. You can check the work for this capstone project here: https://github.com/carian2996/coursera-prediction-text
 
 Major technologies and techniques used: 
 1. R (and RStudio)
